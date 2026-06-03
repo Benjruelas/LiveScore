@@ -1,9 +1,19 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { getSupabase } from "@/lib/supabase/client";
 import type { Player, Round, RoundEvent, Score, Team } from "@/lib/types";
 import { fetchRoundBundle } from "@/lib/round-service";
+
+function mergeScoreRow(prev: Score[], row: Score): Score[] {
+  const filtered = prev.filter((s) => {
+    if (row.team_id) {
+      return !(s.hole === row.hole && s.team_id === row.team_id);
+    }
+    return !(s.hole === row.hole && s.player_id === row.player_id);
+  });
+  return [...filtered, row].sort((a, b) => a.hole - b.hole);
+}
 
 export function useRoundRealtime(slug: string) {
   const [round, setRound] = useState<Round | null>(null);
@@ -14,6 +24,7 @@ export function useRoundRealtime(slug: string) {
   const [loading, setLoading] = useState(true);
   const [online, setOnline] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -30,8 +41,19 @@ export function useRoundRealtime(slug: string) {
     }
   }, [slug]);
 
+  const scheduleRefresh = useCallback(() => {
+    if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    refreshTimer.current = setTimeout(() => {
+      refreshTimer.current = null;
+      refresh();
+    }, 150);
+  }, [refresh]);
+
   useEffect(() => {
     refresh();
+    return () => {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
   }, [refresh]);
 
   useEffect(() => {
@@ -58,22 +80,39 @@ export function useRoundRealtime(slug: string) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "scores", filter: `round_id=eq.${round.id}` },
-        () => refresh()
+        (payload) => {
+          if (payload.eventType === "DELETE" && payload.old) {
+            const old = payload.old as Score;
+            setScores((prev) =>
+              prev.filter((s) => {
+                if (old.team_id) {
+                  return !(s.hole === old.hole && s.team_id === old.team_id);
+                }
+                return !(s.hole === old.hole && s.player_id === old.player_id);
+              })
+            );
+            return;
+          }
+          if (payload.new) {
+            setScores((prev) => mergeScoreRow(prev, payload.new as Score));
+          }
+          scheduleRefresh();
+        }
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "players", filter: `round_id=eq.${round.id}` },
-        () => refresh()
+        () => scheduleRefresh()
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "teams", filter: `round_id=eq.${round.id}` },
-        () => refresh()
+        () => scheduleRefresh()
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "rounds", filter: `id=eq.${round.id}` },
-        () => refresh()
+        () => scheduleRefresh()
       )
       .on(
         "postgres_changes",
@@ -85,7 +124,16 @@ export function useRoundRealtime(slug: string) {
         },
         (payload) => {
           const ev = payload.new as RoundEvent;
-          setEvents((prev) => [...prev.slice(-20), ev]);
+          setEvents((prev) => {
+            if (prev.some((e) => e.id === ev.id)) return prev;
+            return [...prev.slice(-30), ev];
+          });
+          if (
+            ev.event_type === "score_updated" ||
+            ev.event_type === "leaderboard_milestone"
+          ) {
+            scheduleRefresh();
+          }
         }
       )
       .subscribe();
@@ -93,7 +141,7 @@ export function useRoundRealtime(slug: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [round?.id, refresh]);
+  }, [round?.id, scheduleRefresh]);
 
   return {
     round,

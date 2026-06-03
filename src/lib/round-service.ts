@@ -1,6 +1,9 @@
 import { nanoid } from "nanoid";
 import { getSupabase } from "./supabase/client";
+import { assertCanEnterScore, ScorePermissionError } from "./scoring/score-permissions";
 import type { GameMode, ModeConfig, Player, Round, Score } from "./types";
+
+export { ScorePermissionError };
 
 export async function createRound(params: {
   gameMode: GameMode;
@@ -58,8 +61,13 @@ export async function fetchRoundBySlug(slug: string) {
     .from("rounds")
     .select("*")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
   if (error) throw error;
+  if (!data) {
+    throw new Error(
+      "Round not found. It may have been created before Supabase was connected — create a new round and share the new link."
+    );
+  }
   return data as Round;
 }
 
@@ -106,6 +114,33 @@ export async function upsertScore(payload: {
   wolfPoints?: number | null;
 }) {
   const supabase = getSupabase();
+
+  if (!payload.enteredByPlayerId) {
+    throw new ScorePermissionError("You must join the round before entering scores.");
+  }
+
+  const [{ data: round }, { data: enteredBy }] = await Promise.all([
+    supabase.from("rounds").select("game_mode").eq("id", payload.roundId).single(),
+    supabase.from("players").select("*").eq("id", payload.enteredByPlayerId).single(),
+  ]);
+
+  if (!round) throw new Error("Round not found");
+  assertCanEnterScore(round.game_mode as GameMode, enteredBy as Player | null, {
+    playerId: payload.playerId,
+    teamId: payload.teamId,
+  });
+
+  if (payload.contributorPlayerId && enteredBy) {
+    const { data: contributor } = await supabase
+      .from("players")
+      .select("team_id")
+      .eq("id", payload.contributorPlayerId)
+      .single();
+    if (contributor?.team_id !== enteredBy.team_id) {
+      throw new ScorePermissionError("Contributor must be on your team.");
+    }
+  }
+
   const row = {
     round_id: payload.roundId,
     hole: payload.hole,

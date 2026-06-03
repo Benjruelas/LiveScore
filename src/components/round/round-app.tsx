@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRoundRealtime } from "@/hooks/use-round-realtime";
 import { getStoredPlayerId, setStoredPlayerId } from "@/lib/storage";
-import { joinRound, upsertScore, deleteScore } from "@/lib/round-service";
+import { joinRound, upsertScore, deleteScore, ScorePermissionError } from "@/lib/round-service";
 import { getHolePar } from "@/lib/courses";
 import { enqueueScore, getQueue, removeFromQueue } from "@/lib/offline/queue";
 import { HoleStrip } from "@/components/scoring/hole-strip";
 import { ScoreKeypad } from "@/components/scoring/score-keypad";
+import { TeamHoleScores } from "@/components/scoring/team-hole-scores";
 import { LeaderboardPanel } from "@/components/round/leaderboard-panel";
 import { TeamBuilder } from "@/components/teams/team-builder";
 import { HostAdmin } from "@/components/admin/host-admin";
@@ -40,6 +41,8 @@ export function RoundApp({ slug }: { slug: string }) {
   const [contributorId, setContributorId] = useState<string | null>(null);
   const [wolfPoints, setWolfPoints] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  /** Blocks realtime from overwriting keypad; ref updates synchronously on tap */
+  const scoreDirtyRef = useRef(false);
   const [showRules, setShowRules] = useState(false);
   const [milestone, setMilestone] = useState<{
     hole: number;
@@ -49,7 +52,9 @@ export function RoundApp({ slug }: { slug: string }) {
   const me = players.find((p) => p.id === playerId);
   const isHost = me?.is_host ?? false;
   const teamMode = round?.game_mode === "scramble";
-  const playerMode = !["scramble"].includes(round?.game_mode ?? "");
+  const myTeamId = me?.team_id ?? null;
+  const myTeam = teams.find((t) => t.id === myTeamId);
+  const canPostScore = teamMode ? !!myTeamId : !!playerId;
 
   useEffect(() => {
     const stored = getStoredPlayerId(slug);
@@ -57,13 +62,30 @@ export function RoundApp({ slug }: { slug: string }) {
   }, [slug]);
 
   useEffect(() => {
+    if (round?.status === "active") wasActiveRef.current = true;
+    if (round?.status === "completed") {
+      setTab("leaderboard");
+      if (wasActiveRef.current) {
+        toast("Round complete — check Results!", "milestone");
+        wasActiveRef.current = false;
+      }
+    }
+  }, [round?.status, toast]);
+
+  useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash === "#rules") {
       setShowRules(true);
     }
   }, []);
 
+  const seenEventIdsRef = useRef<Set<string>>(new Set());
+  const wasActiveRef = useRef(false);
+
   useEffect(() => {
     for (const ev of events) {
+      if (seenEventIdsRef.current.has(ev.id)) continue;
+      seenEventIdsRef.current.add(ev.id);
+
       if (ev.event_type === "score_updated") {
         const msg = (ev.payload as { message?: string }).message;
         const by = (ev.payload as { enteredByPlayerId?: string }).enteredByPlayerId;
@@ -111,16 +133,18 @@ export function RoundApp({ slug }: { slug: string }) {
     flush();
   }, [online, round, refresh]);
 
+  const stripScores = useMemo(() => {
+    if (teamMode) {
+      return scores.filter((s) => s.team_id === targetTeamId);
+    }
+    return scores.filter((s) => s.player_id === targetPlayerId);
+  }, [scores, teamMode, targetTeamId, targetPlayerId]);
+
   const scoredHoles = useMemo(() => {
     const set = new Set<number>();
-    if (!round) return set;
-    if (teamMode) {
-      scores.filter((s) => s.team_id).forEach((s) => set.add(s.hole));
-    } else {
-      scores.filter((s) => s.player_id).forEach((s) => set.add(s.hole));
-    }
+    stripScores.forEach((s) => set.add(s.hole));
     return set;
-  }, [scores, round, teamMode]);
+  }, [stripScores]);
 
   const suggestedHole = useMemo(() => {
     for (let h = 1; h <= 18; h++) {
@@ -130,23 +154,44 @@ export function RoundApp({ slug }: { slug: string }) {
   }, [scoredHoles]);
 
   useEffect(() => {
-    if (!targetPlayerId && players.length) {
-      setTargetPlayerId(playerId ?? players[0]?.id ?? null);
-    }
-    if (!targetTeamId && teams.length) {
-      setTargetTeamId(teams[0]?.id ?? null);
-    }
-  }, [players, teams, playerId, targetPlayerId, targetTeamId]);
+    if (playerId) setTargetPlayerId(playerId);
+  }, [playerId]);
 
   useEffect(() => {
-    if (!round) return;
+    if (teamMode && myTeamId) setTargetTeamId(myTeamId);
+  }, [teamMode, myTeamId]);
+
+  const loadSavedScoreForSelection = () => {
     const existing = teamMode
       ? scores.find((s) => s.team_id === targetTeamId && s.hole === hole)
       : scores.find((s) => s.player_id === targetPlayerId && s.hole === hole);
     setStrokes(existing?.strokes ?? null);
     setWolfPoints(existing?.wolf_points ?? null);
-    if (existing?.contributor_player_id) setContributorId(existing.contributor_player_id);
-  }, [hole, targetPlayerId, targetTeamId, scores, round, teamMode]);
+    setContributorId(existing?.contributor_player_id ?? null);
+  };
+
+  const selectHole = (h: number) => {
+    scoreDirtyRef.current = false;
+    setHole(h);
+  };
+
+  const markScoreDirty = () => {
+    scoreDirtyRef.current = true;
+  };
+
+  const setScoreDraft = (n: number) => {
+    markScoreDirty();
+    setStrokes(n);
+  };
+
+  // Only reload keypad when hole / player / team / round id changes — NOT on every realtime refresh
+  useEffect(() => {
+    if (!round?.id) return;
+    if (scoreDirtyRef.current) return;
+    loadSavedScoreForSelection();
+    // scores read from render; intentionally omit scores + round object from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hole, targetPlayerId, targetTeamId, teamMode, round?.id]);
 
   const handleJoin = async () => {
     if (!joinName.trim()) return;
@@ -164,7 +209,7 @@ export function RoundApp({ slug }: { slug: string }) {
   };
 
   const submitScore = async () => {
-    if (!round || strokes == null) return;
+    if (!round || strokes == null || !canPostScore) return;
     setSubmitting(true);
 
     const playerLabel =
@@ -229,12 +274,20 @@ export function RoundApp({ slug }: { slug: string }) {
             strokes,
           }),
         });
+        await refresh();
       }
       const next = hole < 18 ? hole + 1 : hole;
+      scoreDirtyRef.current = false;
       setHole(next);
       setStrokes(null);
     } catch (e) {
-      toast(e instanceof Error ? e.message : "Failed to save");
+      toast(
+        e instanceof ScorePermissionError
+          ? e.message
+          : e instanceof Error
+            ? e.message
+            : "Failed to save"
+      );
       refresh();
     } finally {
       setSubmitting(false);
@@ -299,7 +352,6 @@ export function RoundApp({ slug }: { slug: string }) {
 
   const par = getHolePar(round.course_id, round.tee_id, hole);
   const modeLabel = GAME_MODES.find((m) => m.id === round.game_mode)?.label;
-
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-emerald-950 via-emerald-900 to-emerald-950 pb-24 text-white">
       {!online && (
@@ -337,33 +389,55 @@ export function RoundApp({ slug }: { slug: string }) {
       <main className="flex-1 px-4 pt-4">
         {tab === "score" && round.status === "active" && (
           <div className="space-y-4">
-            <HoleStrip
-              currentHole={hole}
-              courseId={round.course_id}
-              teeId={round.tee_id}
-              scoredHoles={scoredHoles}
-              onSelect={setHole}
-            />
-            <Button variant="ghost" className="text-sm" onClick={() => setHole(suggestedHole)}>
-              Suggested: hole {suggestedHole}
-            </Button>
+            <div className="sticky top-[4.25rem] z-30 -mx-4 border-b border-white/10 bg-emerald-950/95 px-4 py-2 backdrop-blur-md">
+              <HoleStrip
+                currentHole={hole}
+                courseId={round.course_id}
+                teeId={round.tee_id}
+                scores={stripScores}
+                draftStrokes={strokes}
+                onSelect={selectHole}
+              />
+              <Button
+                variant="ghost"
+                className="mt-1 h-8 w-full text-xs"
+                onClick={() => selectHole(suggestedHole)}
+              >
+                Suggested: hole {suggestedHole}
+              </Button>
+            </div>
 
-            {playerMode && players.length > 1 && (
+            <Card>
+              <p className="text-xs text-white/50">Scoring for</p>
+              <p className="mt-1 text-lg font-semibold text-white">
+                {teamMode
+                  ? (myTeam?.name ?? "No team assigned")
+                  : (me?.display_name ?? "—")}
+              </p>
+              {teamMode && !myTeamId && (
+                <p className="mt-2 text-sm text-amber-200">
+                  Ask the host to add you to a team before entering scores.
+                </p>
+              )}
+            </Card>
+
+            {teamMode && myTeamId && (
               <Card>
-                <p className="mb-2 text-xs text-white/50">Scoring for</p>
+                <p className="mb-2 text-xs text-white/50">Shot counted (optional)</p>
                 <div className="flex flex-wrap gap-2">
                   {players
-                    .filter((p) => p.is_active)
+                    .filter((p) => p.is_active && p.team_id === myTeamId)
                     .map((p) => (
                       <button
                         key={p.id}
                         type="button"
-                        onClick={() => setTargetPlayerId(p.id)}
+                        onClick={() => {
+                          markScoreDirty();
+                          setContributorId(contributorId === p.id ? null : p.id);
+                        }}
                         className={cn(
-                          "rounded-lg px-3 py-2 text-sm font-medium",
-                          targetPlayerId === p.id
-                            ? "bg-emerald-500 text-white"
-                            : "bg-white/10"
+                          "rounded-lg px-2 py-1 text-xs",
+                          contributorId === p.id ? "bg-amber-500" : "bg-white/10"
                         )}
                       >
                         {p.display_name}
@@ -373,49 +447,17 @@ export function RoundApp({ slug }: { slug: string }) {
               </Card>
             )}
 
-            {teamMode && (
-              <Card>
-                <p className="mb-2 text-xs text-white/50">Team</p>
-                <div className="flex flex-wrap gap-2">
-                  {teams.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTargetTeamId(t.id)}
-                      className={cn(
-                        "rounded-lg px-3 py-2 text-sm",
-                        targetTeamId === t.id ? "bg-emerald-500" : "bg-white/10"
-                      )}
-                    >
-                      {t.name}
-                    </button>
-                  ))}
-                </div>
-                {teams.length > 0 && (
-                  <div className="mt-3">
-                    <p className="mb-1 text-xs text-white/50">Shot counted (optional)</p>
-                    <div className="flex flex-wrap gap-2">
-                      {players
-                        .filter((p) => p.team_id === targetTeamId)
-                        .map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() =>
-                              setContributorId(contributorId === p.id ? null : p.id)
-                            }
-                            className={cn(
-                              "rounded-lg px-2 py-1 text-xs",
-                              contributorId === p.id ? "bg-amber-500" : "bg-white/10"
-                            )}
-                          >
-                            {p.display_name}
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </Card>
+            {teams.length > 0 && (
+              <TeamHoleScores
+                teams={teams}
+                players={players}
+                scores={scores}
+                hole={hole}
+                courseId={round.course_id}
+                teeId={round.tee_id}
+                scramble={teamMode}
+                highlightTeamId={myTeamId}
+              />
             )}
 
             {round.game_mode === "wolf" && (
@@ -426,7 +468,10 @@ export function RoundApp({ slug }: { slug: string }) {
                     <button
                       key={pt}
                       type="button"
-                      onClick={() => setWolfPoints(pt)}
+                      onClick={() => {
+                        markScoreDirty();
+                        setWolfPoints(pt);
+                      }}
                       className={cn(
                         "min-h-12 flex-1 rounded-lg font-bold",
                         wolfPoints === pt ? "bg-emerald-500" : "bg-white/10"
@@ -442,9 +487,10 @@ export function RoundApp({ slug }: { slug: string }) {
             <ScoreKeypad
               value={strokes}
               par={par}
-              onChange={setStrokes}
+              onChange={setScoreDraft}
               onSubmit={submitScore}
               submitting={submitting}
+              disabled={!canPostScore}
             />
 
             {isHost && (
@@ -479,7 +525,13 @@ export function RoundApp({ slug }: { slug: string }) {
         )}
 
         {tab === "leaderboard" && (
-          <LeaderboardPanel round={round} players={players} teams={teams} scores={scores} />
+          <LeaderboardPanel
+            round={round}
+            players={players}
+            teams={teams}
+            scores={scores}
+            playerId={playerId}
+          />
         )}
 
         {tab === "teams" && (
@@ -501,8 +553,8 @@ export function RoundApp({ slug }: { slug: string }) {
       <nav className="fixed bottom-0 left-0 right-0 flex border-t border-white/10 bg-emerald-950/95 backdrop-blur">
         {(
           [
-            ["score", "Score"],
-            ["leaderboard", "Board"],
+            ...(round.status === "active" ? [["score", "Score"] as const] : []),
+            ["leaderboard", round.status === "completed" ? "Results" : "Board"],
             ...(round.status === "setup" || isHost
               ? [["teams", "Teams"] as const]
               : []),
@@ -567,8 +619,8 @@ function HostScoreList({
               className="w-full text-left text-sm text-white/80"
               onClick={() => s.id.startsWith("temp") ? undefined : onDelete(s.id)}
             >
-              H{s.hole}: {players.find((p) => p.id === s.player_id)?.display_name ?? "Team"}{" "}
-              — {s.strokes}
+              H{s.hole}: {players.find((p) => p.id === s.player_id)?.display_name ?? "Team"} —{" "}
+              {s.strokes}
             </button>
           </li>
         ))}

@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/server";
 import { getTee } from "@/lib/courses";
 import { computeFullMilestonePayload } from "@/lib/scoring";
+import {
+  getTeamsWithMembers,
+  isRoundFullyScored,
+  teamCompletedHole,
+} from "@/lib/scoring/helpers";
 import { MILESTONE_HOLES } from "@/lib/constants";
 import type { GameMode, ModeConfig, Player, Score, Team } from "@/lib/types";
 import webpush from "web-push";
@@ -33,6 +38,9 @@ export async function POST(request: Request) {
     const supabase = getSupabaseAdmin();
     const { data: round } = await supabase.from("rounds").select("*").eq("id", roundId).single();
     if (!round) return NextResponse.json({ error: "Round not found" }, { status: 404 });
+    if (round.status === "completed") {
+      return NextResponse.json({ ok: true, roundCompleted: true });
+    }
 
     const [{ data: players }, { data: teams }, { data: scores }] = await Promise.all([
       supabase.from("players").select("*").eq("round_id", roundId),
@@ -54,16 +62,45 @@ export async function POST(request: Request) {
 
     const holeScores = (scores ?? []).filter((s: Score) => s.hole === hole);
     const teamMode = ["scramble", "ryder", "best_ball"].includes(round.game_mode);
-    const requiredCount = teamMode ? (teams ?? []).length : activePlayers.length;
-    const completeCount = teamMode
-      ? new Set(holeScores.map((s: Score) => s.team_id).filter(Boolean)).size
-      : new Set(holeScores.map((s: Score) => s.player_id).filter(Boolean)).size;
+    const gameMode = round.game_mode as GameMode;
+
+    let requiredCount = activePlayers.length;
+    let completeCount = new Set(
+      holeScores.map((s: Score) => s.player_id).filter(Boolean)
+    ).size;
+
+    if (teamMode && teams) {
+      const ctx = {
+        mode: gameMode,
+        modeConfig: (round.mode_config ?? {}) as ModeConfig,
+        players: players as Player[],
+        teams: teams as Team[],
+        scores: scores as Score[],
+        holes: [],
+        handicapsEnabled: round.handicaps_enabled,
+      };
+      const contestTeams = getTeamsWithMembers(ctx);
+      requiredCount = contestTeams.length;
+      completeCount = contestTeams.filter((t) =>
+        teamCompletedHole(t.id, hole, gameMode, players as Player[], scores as Score[])
+      ).length;
+    }
+
+    const fullyScored =
+      round.status === "active" &&
+      isRoundFullyScored(
+        gameMode,
+        players as Player[],
+        (teams ?? []) as Team[],
+        scores as Score[]
+      );
 
     let milestone = null;
     if (
       MILESTONE_HOLES.includes(hole) &&
       requiredCount > 0 &&
-      completeCount >= requiredCount
+      completeCount >= requiredCount &&
+      !(hole === 18 && fullyScored)
     ) {
       const tee = getTee(round.course_id, round.tee_id);
       const lb = computeFullMilestonePayload({
@@ -94,7 +131,43 @@ export async function POST(request: Request) {
       await sendPush(supabase, roundId, "LiveScore", scoreMsg, enteredByPlayerId);
     }
 
-    return NextResponse.json({ ok: true, milestone });
+    let roundCompleted = false;
+    if (fullyScored) {
+      const tee = getTee(round.course_id, round.tee_id);
+      const finalLb = computeFullMilestonePayload({
+        mode: gameMode,
+        modeConfig: (round.mode_config ?? {}) as ModeConfig,
+        players: players as Player[],
+        teams: (teams ?? []) as Team[],
+        scores: scores as Score[],
+        holes: tee?.holes ?? [],
+        handicapsEnabled: round.handicaps_enabled,
+        slopeRating: tee?.slopeRating,
+        throughHole: 18,
+      });
+
+      await supabase
+        .from("rounds")
+        .update({ status: "completed", updated_at: new Date().toISOString() })
+        .eq("id", roundId);
+
+      await supabase.from("round_events").insert({
+        round_id: roundId,
+        event_type: "leaderboard_milestone",
+        payload: { hole: 18, leaderboard: finalLb, roundComplete: true },
+      });
+
+      const winner = finalLb.standings[0]?.label ?? "the leaders";
+      await sendPush(
+        supabase,
+        roundId,
+        "Round complete!",
+        `All 18 holes in — ${winner} take the crown.`
+      );
+      roundCompleted = true;
+    }
+
+    return NextResponse.json({ ok: true, milestone, roundCompleted });
   } catch (e) {
     console.error(e);
     return NextResponse.json(

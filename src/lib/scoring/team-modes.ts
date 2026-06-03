@@ -1,5 +1,6 @@
 import type { LeaderboardResult, StandingRow } from "../types";
 import type { ScoringContext } from "./types";
+import { getTeamsWithMembers } from "./helpers";
 
 function teamHoleBest(
   teamId: string,
@@ -77,30 +78,35 @@ export function computeBestBallLeaderboard(ctx: ScoringContext): LeaderboardResu
 export function computeRyderLeaderboard(ctx: ScoringContext): LeaderboardResult {
   const through = ctx.throughHole ?? 18;
   const format = ctx.modeConfig.ryder_format ?? "team_points";
+  const contestTeams = getTeamsWithMembers(ctx);
   const teamStats = ctx.teams.map((t) => ({
     id: t.id,
     label: t.name,
     points: 0,
     strokes: 0,
     holeWins: 0,
+    hasPlayers: contestTeams.some((c) => c.id === t.id),
   }));
 
   for (let h = 1; h <= through; h++) {
-    const totals = ctx.teams.map((t) => ({
-      teamId: t.id,
-      strokes: teamHoleBest(t.id, h, ctx, false),
-    }));
-    if (totals.some((x) => x.strokes == null)) continue;
+    const totals = contestTeams
+      .map((t) => ({
+        teamId: t.id,
+        strokes: teamHoleBest(t.id, h, ctx, false),
+      }))
+      .filter((x): x is { teamId: string; strokes: number } => x.strokes != null);
+
+    if (totals.length === 0) continue;
 
     if (format === "cumulative_strokes") {
-      for (const t of teamStats) {
-        const s = totals.find((x) => x.teamId === t.id)?.strokes ?? 0;
-        t.strokes += s;
+      for (const row of totals) {
+        const ts = teamStats.find((x) => x.id === row.teamId);
+        if (ts) ts.strokes += row.strokes;
       }
       continue;
     }
 
-    const sorted = [...totals].sort((a, b) => (a.strokes ?? 99) - (b.strokes ?? 99));
+    const sorted = [...totals].sort((a, b) => a.strokes - b.strokes);
     const best = sorted[0].strokes;
     const winners = sorted.filter((x) => x.strokes === best);
 
@@ -127,7 +133,8 @@ export function computeRyderLeaderboard(ctx: ScoringContext): LeaderboardResult 
       id: t.id,
       label: t.label,
       rank: i + 1,
-      primary: `${t.strokes} strokes`,
+      primary: t.hasPlayers ? `${t.strokes} strokes` : "—",
+      secondary: t.hasPlayers ? undefined : "No players",
     }));
   } else if (format === "match_play") {
     teamStats.sort((a, b) => b.holeWins - a.holeWins);
@@ -135,7 +142,8 @@ export function computeRyderLeaderboard(ctx: ScoringContext): LeaderboardResult 
       id: t.id,
       label: t.label,
       rank: i + 1,
-      primary: `${t.holeWins} holes won`,
+      primary: t.hasPlayers ? `${t.holeWins} holes won` : "—",
+      secondary: t.hasPlayers ? undefined : "No players",
     }));
   } else {
     teamStats.sort((a, b) => b.points - a.points);
@@ -143,15 +151,27 @@ export function computeRyderLeaderboard(ctx: ScoringContext): LeaderboardResult 
       id: t.id,
       label: t.label,
       rank: i + 1,
-      primary: `${t.points} pts`,
+      primary: t.hasPlayers ? `${t.points} pts` : "—",
+      secondary: t.hasPlayers ? undefined : "No players",
     }));
   }
 
-  const leader = standings[0];
+  const activeStandings = standings.filter((s) => {
+    const t = teamStats.find((x) => x.id === s.id);
+    return t?.hasPlayers;
+  });
+  const leader = activeStandings[0] ?? standings[0];
+  const contestNote =
+    contestTeams.length < ctx.teams.length
+      ? ` (${contestTeams.length} of ${ctx.teams.length} teams have players)`
+      : "";
+
   return {
     mode: "ryder",
     standings,
-    drama: leader ? `${leader.label} leads Ryder (${format.replace(/_/g, " ")})` : "Ryder Cup underway",
+    drama: leader?.primary !== "—"
+      ? `${leader.label} leads Ryder (${format.replace(/_/g, " ")})${contestNote}`
+      : `Assign players to teams to start Ryder scoring${contestNote}`,
     hole: through,
   };
 }
