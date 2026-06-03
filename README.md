@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LiveScore Golf
 
-## Getting Started
+Mobile-first PWA for live bachelor-trip golf scoring at **Las Vegas Paiute**.
 
-First, run the development server:
+## Stack
+
+- **Next.js** on Vercel (UI + API routes for push/events)
+- **Supabase** Postgres + **Realtime** (instant score sync across phones)
+- Optional **Web Push** via VAPID keys
+
+## Setup
+
+### 1. Supabase
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Open **SQL Editor** → run [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql)
+3. **Database → Publications**: confirm `supabase_realtime` includes `scores`, `round_events`, `players`, `teams`, `rounds` (the migration adds these)
+4. **Project Settings → API**: copy URL, anon key, and service role key
+
+### 2. Local env
 
 ```bash
+cp .env.local.example .env.local
+# Fill in Supabase URL, anon key, service role key
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Deploy (Vercel)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Add the same env vars in Vercel. Set `NEXT_PUBLIC_APP_URL` to your production URL.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Optional push
 
-## Learn More
+```bash
+npx web-push generate-vapid-keys
+```
 
-To learn more about Next.js, take a look at the following resources:
+Add `VAPID_*` to `.env.local` and Vercel.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Test with multiple users
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Host:** normal browser window → Create round → Share link
+- **Players:** **incognito windows** (one name each) — same browser tabs share one player identity
 
-## Deploy on Vercel
+## Usage
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Host creates round, shares `/r/{slug}` link
+2. Players join with display names
+3. Host assigns teams → **Start round**
+4. Anyone posts scores — everyone sees updates via **Supabase Realtime** (no polling)

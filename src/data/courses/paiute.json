@@ -1,0 +1,141 @@
+[
+  {
+    "id": "wolf",
+    "name": "Wolf Course",
+    "tees": [
+      {
+        "id": "tournament",
+        "name": "Tournament",
+        "color": "#1a1a1a",
+        "totalYardage": 7604,
+        "courseRating": 75.5,
+        "slopeRating": 145,
+        "holes": [
+          {"hole":1,"par":4,"yardage":433,"strokeIndex":7},{"hole":2,"par":4,"yardage":412,"strokeIndex":17},{"hole":3,"par":5,"yardage":580,"strokeIndex":5},{"hole":4,"par":3,"yardage":223,"strokeIndex":11},{"hole":5,"par":4,"yardage":413,"strokeIndex":9},{"hole":6,"par":5,"yardage":537,"strokeIndex":15},{"hole":7,"par":4,"yardage":495,"strokeIndex":1},{"hole":8,"par":3,"yardage":206,"strokeIndex":13},{"hole":9,"par":4,"yardage":496,"strokeIndex":3},{"hole":10,"par":5,"yardage":568,"strokeIndex":8},{"hole":11,"par":4,"yardage":386,"strokeIndex":18},{"hole":12,"par":3,"yardage":209,"strokeIndex":10},{"hole":13,"par":5,"yardage":563,"strokeIndex":12},{"hole":14,"par":4,"yardage":492,"strokeIndex":2},{"hole":15,"par":3,"yardage":182,"strokeIndex":16},{"hole":16,"par":4,"yardage":427,"strokeIndex":14},{"hole":17,"par":4,"yardage":486,"strokeIndex":4},{"hole":18,"par":4,"yardage":496,"strokeIndex":6}
+        ]
+      },
+      {
+        "id": "black",
+        "name": "Black",
+        "color": "#333333",
+        "totalYardage": 7009,
+        "courseRating": 72.6,
+        "slopeRating": 131,
+        "holes": [
+          {"hole":1,"par":4,"yardage":398,"strokeIndex":7},{"hole":2,"par":4,"yardage":369,"strokeIndex":17},{"hole":3,"par":5,"yardage":540,"strokeIndex":5},{"hole":4,"par":3,"yardage":192,"strokeIndex":11},{"hole":5,"par":4,"yardage":396,"strokeIndex":9},{"hole":6,"par":5,"yardage":499,"strokeIndex":15},{"hole":7,"par":4,"yardage":470,"strokeIndex":1},{"hole":8,"par":3,"yardage":177,"strokeIndex":13},{"hole":9,"par":4,"yardage":446,"strokeIndex":3},{"hole":10,"par":5,"yardage":517,"strokeIndex":8},{"hole":11,"par":4,"yardage":359,"strokeIndex":18},{"hole":12,"par":3,"yardage":181,"strokeIndex":10},{"hole":13,"par":5,"yardage":527,"strokeIndex":12},{"hole":14,"par":4,"yardage":452,"strokeIndex":2},{"hole":15,"par":3,"yardage":162,"strokeIndex":16},{"hole":16,"par":4,"yardage":407,"strokeIndex":14},{"hole":17,"par":4,"yardage":441,"strokeIndex":4},{"hole":18,"par":4,"yardage":476,"strokeIndex":6}
+        ]
+      },
+      {
+        "id": "yellow",
+        "name": "Yellow",
+        "color": "#e6b800",
+        "totalYardage": 6483,
+        "courseRating": 70.7,
+        "slopeRating": 126,
+        "holes": [
+          {"hole":1,"par":4,"yardage":382,"strokeIndex":7},{"hole":2,"par":4,"yardage":333,"strokeIndex":17},{"hole":3,"par":5,"yardage":524,"strokeIndex":5},{"hole":4,"par":3,"yardage":181,"strokeIndex":11},{"hole":5,"par":4,"yardage":376,"strokeIndex":9},{"hole":6,"par":5,"yardage":480,"strokeIndex":15},{"hole":7,"par":4,"yardage":410,"strokeIndex":1},{"hole":8,"par":3,"yardage":165,"strokeIndex":13},{"hole":9,"par":4,"yardage":431,"strokeIndex":3},{"hole":10,"par":5,"yardage":490,"strokeIndex":8},{"hole":11,"par":4,"yardage":325,"strokeIndex":18},{"hole":12,"par":3,"yardage":167,"strokeIndex":10},{"hole":13,"par":5,"yardage":487,"strokeIndex":12},{"hole":14,"par":4,"yardage":438,"strokeIndex":2},{"hole":15,"par":3,"yardage":138,"strokeIndex":16},{"hole":16,"par":4,"yardage":367,"strokeIndex":14},{"hole":17,"par":4,"yardage":361,"strokeIndex":4},{"hole":18,"par":4,"yardage":428,"strokeIndex":6}
+        ]
+      },
+      {
+        "id": "white",
+        "name": "White",
+        "color": "#f5f5f5",
+        "totalYardage": 5910,
+        "courseRating": 67.8,
+        "slopeRating": 122,
+        "holes": [
+          {"hole":1,"par":4,"yardage":346,"strokeIndex":7},{"hole":2,"par":4,"yardage":279,"strokeIndex":17},{"hole":3,"par":5,"yardage":501,"strokeIndex":5},{"hole":4,"par":3,"yardage":163,"strokeIndex":11},{"hole":5,"par":4,"yardage":340,"strokeIndex":9},{"hole":6,"par":5,"yardage":452,"strokeIndex":15},{"hole":7,"par":4,"yardage":373,"strokeIndex":1},{"hole":8,"par":3,"yardage":148,"strokeIndex":13},{"hole":9,"par":4,"yardage":381,"strokeIndex":3},{"hole":10,"par":5,"yardage":473,"strokeIndex":8},{"hole":11,"par":4,"yardage":289,"strokeIndex":18},{"hole":12,"par":3,"yardage":137,"strokeIndex":10},{"hole":13,"par":5,"yardage":456,"strokeIndex":12},{"hole":14,"par":4,"yardage":413,"strokeIndex":2},{"hole":15,"par":3,"yardage":110,"strokeIndex":16},{"hole":16,"par":4,"yardage":317,"strokeIndex":14},{"hole":17,"par":4,"yardage":337,"strokeIndex":4},{"hole":18,"par":4,"yardage":395,"strokeIndex":6}
+        ]
+      },
+      {
+        "id": "red",
+        "name": "Red",
+        "color": "#c41e3a",
+        "totalYardage": 5130,
+        "courseRating": 68.4,
+        "slopeRating": 118,
+        "holes": [
+          {"hole":1,"par":4,"yardage":277,"strokeIndex":7},{"hole":2,"par":4,"yardage":259,"strokeIndex":17},{"hole":3,"par":5,"yardage":412,"strokeIndex":3},{"hole":4,"par":3,"yardage":137,"strokeIndex":11},{"hole":5,"par":4,"yardage":278,"strokeIndex":9},{"hole":6,"par":5,"yardage":389,"strokeIndex":15},{"hole":7,"par":4,"yardage":332,"strokeIndex":1},{"hole":8,"par":3,"yardage":123,"strokeIndex":13},{"hole":9,"par":4,"yardage":328,"strokeIndex":5},{"hole":10,"par":5,"yardage":440,"strokeIndex":6},{"hole":11,"par":4,"yardage":244,"strokeIndex":18},{"hole":12,"par":3,"yardage":121,"strokeIndex":10},{"hole":13,"par":5,"yardage":429,"strokeIndex":12},{"hole":14,"par":4,"yardage":342,"strokeIndex":2},{"hole":15,"par":3,"yardage":98,"strokeIndex":16},{"hole":16,"par":4,"yardage":306,"strokeIndex":14},{"hole":17,"par":4,"yardage":281,"strokeIndex":4},{"hole":18,"par":4,"yardage":334,"strokeIndex":8}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "snow_mountain",
+    "name": "Snow Mountain",
+    "tees": [
+      {
+        "id": "championship",
+        "name": "Championship",
+        "color": "#1a1a1a",
+        "totalYardage": 7146,
+        "courseRating": 73.2,
+        "slopeRating": 135,
+        "holes": [
+          {"hole":1,"par":4,"yardage":420,"strokeIndex":9},{"hole":2,"par":4,"yardage":385,"strokeIndex":15},{"hole":3,"par":5,"yardage":545,"strokeIndex":3},{"hole":4,"par":4,"yardage":410,"strokeIndex":11},{"hole":5,"par":3,"yardage":195,"strokeIndex":17},{"hole":6,"par":4,"yardage":435,"strokeIndex":7},{"hole":7,"par":5,"yardage":555,"strokeIndex":1},{"hole":8,"par":3,"yardage":175,"strokeIndex":13},{"hole":9,"par":4,"yardage":440,"strokeIndex":5},{"hole":10,"par":4,"yardage":400,"strokeIndex":10},{"hole":11,"par":5,"yardage":530,"strokeIndex":2},{"hole":12,"par":4,"yardage":415,"strokeIndex":8},{"hole":13,"par":3,"yardage":185,"strokeIndex":18},{"hole":14,"par":4,"yardage":425,"strokeIndex":12},{"hole":15,"par":5,"yardage":540,"strokeIndex":4},{"hole":16,"par":3,"yardage":210,"strokeIndex":16},{"hole":17,"par":4,"yardage":450,"strokeIndex":6},{"hole":18,"par":4,"yardage":431,"strokeIndex":14}
+        ]
+      },
+      {
+        "id": "member",
+        "name": "Member",
+        "color": "#e6b800",
+        "totalYardage": 6035,
+        "courseRating": 69.5,
+        "slopeRating": 128,
+        "holes": [
+          {"hole":1,"par":4,"yardage":380,"strokeIndex":9},{"hole":2,"par":4,"yardage":350,"strokeIndex":15},{"hole":3,"par":5,"yardage":500,"strokeIndex":3},{"hole":4,"par":4,"yardage":375,"strokeIndex":11},{"hole":5,"par":3,"yardage":165,"strokeIndex":17},{"hole":6,"par":4,"yardage":400,"strokeIndex":7},{"hole":7,"par":5,"yardage":510,"strokeIndex":1},{"hole":8,"par":3,"yardage":155,"strokeIndex":13},{"hole":9,"par":4,"yardage":400,"strokeIndex":5},{"hole":10,"par":4,"yardage":365,"strokeIndex":10},{"hole":11,"par":5,"yardage":485,"strokeIndex":2},{"hole":12,"par":4,"yardage":380,"strokeIndex":8},{"hole":13,"par":3,"yardage":165,"strokeIndex":18},{"hole":14,"par":4,"yardage":390,"strokeIndex":12},{"hole":15,"par":5,"yardage":495,"strokeIndex":4},{"hole":16,"par":3,"yardage":185,"strokeIndex":16},{"hole":17,"par":4,"yardage":410,"strokeIndex":6},{"hole":18,"par":4,"yardage":395,"strokeIndex":14}
+        ]
+      },
+      {
+        "id": "forward",
+        "name": "Forward",
+        "color": "#c41e3a",
+        "totalYardage": 5341,
+        "courseRating": 66.8,
+        "slopeRating": 120,
+        "holes": [
+          {"hole":1,"par":4,"yardage":340,"strokeIndex":9},{"hole":2,"par":4,"yardage":310,"strokeIndex":15},{"hole":3,"par":5,"yardage":460,"strokeIndex":3},{"hole":4,"par":4,"yardage":340,"strokeIndex":11},{"hole":5,"par":3,"yardage":140,"strokeIndex":17},{"hole":6,"par":4,"yardage":360,"strokeIndex":7},{"hole":7,"par":5,"yardage":470,"strokeIndex":1},{"hole":8,"par":3,"yardage":130,"strokeIndex":13},{"hole":9,"par":4,"yardage":360,"strokeIndex":5},{"hole":10,"par":4,"yardage":330,"strokeIndex":10},{"hole":11,"par":5,"yardage":440,"strokeIndex":2},{"hole":12,"par":4,"yardage":345,"strokeIndex":8},{"hole":13,"par":3,"yardage":145,"strokeIndex":18},{"hole":14,"par":4,"yardage":355,"strokeIndex":12},{"hole":15,"par":5,"yardage":450,"strokeIndex":4},{"hole":16,"par":3,"yardage":165,"strokeIndex":16},{"hole":17,"par":4,"yardage":375,"strokeIndex":6},{"hole":18,"par":4,"yardage":356,"strokeIndex":14}
+        ]
+      }
+    ]
+  },
+  {
+    "id": "sun_mountain",
+    "name": "Sun Mountain",
+    "tees": [
+      {
+        "id": "championship",
+        "name": "Championship",
+        "color": "#1a1a1a",
+        "totalYardage": 7112,
+        "courseRating": 73.0,
+        "slopeRating": 134,
+        "holes": [
+          {"hole":1,"par":4,"yardage":415,"strokeIndex":8},{"hole":2,"par":5,"yardage":530,"strokeIndex":4},{"hole":3,"par":4,"yardage":400,"strokeIndex":12},{"hole":4,"par":3,"yardage":190,"strokeIndex":16},{"hole":5,"par":4,"yardage":430,"strokeIndex":6},{"hole":6,"par":4,"yardage":405,"strokeIndex":14},{"hole":7,"par":3,"yardage":170,"strokeIndex":18},{"hole":8,"par":5,"yardage":545,"strokeIndex":2},{"hole":9,"par":4,"yardage":445,"strokeIndex":10},{"hole":10,"par":4,"yardage":410,"strokeIndex":9},{"hole":11,"par":4,"yardage":395,"strokeIndex":13},{"hole":12,"par":5,"yardage":520,"strokeIndex":3},{"hole":13,"par":3,"yardage":180,"strokeIndex":17},{"hole":14,"par":4,"yardage":420,"strokeIndex":11},{"hole":15,"par":4,"yardage":440,"strokeIndex":7},{"hole":16,"par":5,"yardage":535,"strokeIndex":1},{"hole":17,"par":3,"yardage":200,"strokeIndex":15},{"hole":18,"par":4,"yardage":412,"strokeIndex":5}
+        ]
+      },
+      {
+        "id": "member",
+        "name": "Member",
+        "color": "#e6b800",
+        "totalYardage": 6200,
+        "courseRating": 70.0,
+        "slopeRating": 127,
+        "holes": [
+          {"hole":1,"par":4,"yardage":385,"strokeIndex":8},{"hole":2,"par":5,"yardage":490,"strokeIndex":4},{"hole":3,"par":4,"yardage":370,"strokeIndex":12},{"hole":4,"par":3,"yardage":165,"strokeIndex":16},{"hole":5,"par":4,"yardage":400,"strokeIndex":6},{"hole":6,"par":4,"yardage":375,"strokeIndex":14},{"hole":7,"par":3,"yardage":150,"strokeIndex":18},{"hole":8,"par":5,"yardage":500,"strokeIndex":2},{"hole":9,"par":4,"yardage":410,"strokeIndex":10},{"hole":10,"par":4,"yardage":380,"strokeIndex":9},{"hole":11,"par":4,"yardage":360,"strokeIndex":13},{"hole":12,"par":5,"yardage":480,"strokeIndex":3},{"hole":13,"par":3,"yardage":165,"strokeIndex":17},{"hole":14,"par":4,"yardage":390,"strokeIndex":11},{"hole":15,"par":4,"yardage":405,"strokeIndex":7},{"hole":16,"par":5,"yardage":495,"strokeIndex":1},{"hole":17,"par":3,"yardage":185,"strokeIndex":15},{"hole":18,"par":4,"yardage":385,"strokeIndex":5}
+        ]
+      },
+      {
+        "id": "forward",
+        "name": "Forward",
+        "color": "#c41e3a",
+        "totalYardage": 5400,
+        "courseRating": 67.0,
+        "slopeRating": 119,
+        "holes": [
+          {"hole":1,"par":4,"yardage":340,"strokeIndex":8},{"hole":2,"par":5,"yardage":440,"strokeIndex":4},{"hole":3,"par":4,"yardage":330,"strokeIndex":12},{"hole":4,"par":3,"yardage":140,"strokeIndex":16},{"hole":5,"par":4,"yardage":360,"strokeIndex":6},{"hole":6,"par":4,"yardage":340,"strokeIndex":14},{"hole":7,"par":3,"yardage":130,"strokeIndex":18},{"hole":8,"par":5,"yardage":450,"strokeIndex":2},{"hole":9,"par":4,"yardage":370,"strokeIndex":10},{"hole":10,"par":4,"yardage":345,"strokeIndex":9},{"hole":11,"par":4,"yardage":325,"strokeIndex":13},{"hole":12,"par":5,"yardage":430,"strokeIndex":3},{"hole":13,"par":3,"yardage":145,"strokeIndex":17},{"hole":14,"par":4,"yardage":355,"strokeIndex":11},{"hole":15,"par":4,"yardage":365,"strokeIndex":7},{"hole":16,"par":5,"yardage":445,"strokeIndex":1},{"hole":17,"par":3,"yardage":165,"strokeIndex":15},{"hole":18,"par":4,"yardage":350,"strokeIndex":5}
+        ]
+      }
+    ]
+  }
+]
